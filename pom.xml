@@ -57,8 +57,8 @@
 	</build>
 
 	<scm>
-		<developerConnection>scm:git:git@github.com:Lirike/sfg-pet-clinic.git</developerConnection>
-	  <tag>sfg-pet-clinic-0.0.1</tag>
+		<developerConnection>scm:git:https://github.com/Lirike/sfg-pet-clinic.git</developerConnection>
+		<tag>HEAD</tag>
   </scm>
 
 </project>
