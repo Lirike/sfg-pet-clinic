@@ -63,17 +63,6 @@ public class DataLoader implements CommandLineRunner {
         owner1.setCity("Miami");
         owner1.setTelephone("1231231234");
 
-        ownerService.save(owner1);
-
-        Owner owner2 = new Owner();
-        owner2.setFirstName("Lina");
-        owner2.setLastName("Clay");
-        owner2.setAddress("123 Brickerel");
-        owner2.setCity("Miami");
-        owner2.setTelephone("1231231234");
-
-        ownerService.save(owner2);
-
         Pet mikesPet = new Pet();
         mikesPet.setPetType(savedDogPetType);
         mikesPet.setOwner(owner1);
@@ -81,16 +70,26 @@ public class DataLoader implements CommandLineRunner {
         mikesPet.setName("Rosco");
         owner1.getPets().add(mikesPet);
 
-        Pet linasPet = new Pet();
-        linasPet.setPetType(savedCatPetType);
-        linasPet.setOwner(owner2);
-        linasPet.setBirthDate(LocalDate.now());
-        linasPet.setName("Just Cat");
-        owner2.getPets().add(linasPet);
+        ownerService.save(owner1);
 
+        Owner owner2 = new Owner();
+        owner2.setFirstName("Fiona");
+        owner2.setLastName("Clay");
+        owner2.setAddress("123 Brickerel");
+        owner2.setCity("Miami");
+        owner2.setTelephone("1231231234");
+
+        Pet fionaPet = new Pet();
+        fionaPet.setPetType(savedCatPetType);
+        fionaPet.setOwner(owner2);
+        fionaPet.setBirthDate(LocalDate.now());
+        fionaPet.setName("Just Cat");
+        owner2.getPets().add(fionaPet);
+
+        ownerService.save(owner2);
 
         Visit catVisit = new Visit();
-        catVisit.setPet(linasPet);
+        catVisit.setPet(fionaPet);
         catVisit.setDate(LocalDate.now());
         catVisit.setDescription("Sneezy Kitty");
 
