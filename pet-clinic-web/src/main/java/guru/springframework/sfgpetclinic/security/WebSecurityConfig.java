@@ -3,6 +3,7 @@ package guru.springframework.sfgpetclinic.security;
 import guru.springframework.sfgpetclinic.security.jwt.AuthEntryPointJwt;
 import guru.springframework.sfgpetclinic.security.jwt.AuthTokenFilter;
 import guru.springframework.sfgpetclinic.services.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,18 +24,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 		// jsr250Enabled = true,
 		prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@Autowired
 	UserDetailsServiceImpl userDetailsService;
-	private AuthEntryPointJwt unauthorizedHandler;
+	@Autowired
+	AuthEntryPointJwt unauthorizedHandler;
+	@Autowired
+	AuthTokenFilter authTokenFilter;
 
-	public WebSecurityConfig(UserDetailsServiceImpl userDetailsService, AuthEntryPointJwt unauthorizedHandler) {
-		this.userDetailsService = userDetailsService;
-		this.unauthorizedHandler = unauthorizedHandler;
-	}
-
-	@Bean
-	public AuthTokenFilter authenticationJwtTokenFilter() {
-		return new AuthTokenFilter();
-	}
 	@Override
 	public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
 		authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
@@ -60,6 +57,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers("/api/test/**").permitAll()
 			.anyRequest().authenticated();
 
-		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 }
