@@ -8,5 +8,6 @@ public interface OwnerService extends CrudService<Owner, Long> {
 
     Owner findByLastName(String lastName);
 
+   // Collection<Owner> findOwnerByLastName(String lastName) throws DataAccessException;
     List<Owner> findAllByLastNameLike(String lastName);
 }

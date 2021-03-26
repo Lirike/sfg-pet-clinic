@@ -1,18 +1,17 @@
 package guru.springframework.sfgpetclinic.controllers;
 
-import guru.springframework.sfgpetclinic.model.Owner;
 import guru.springframework.sfgpetclinic.model.Pet;
-import guru.springframework.sfgpetclinic.model.PetType;
 import guru.springframework.sfgpetclinic.services.OwnerService;
 import guru.springframework.sfgpetclinic.services.PetService;
 import guru.springframework.sfgpetclinic.services.PetTypeService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.ui.ModelMap;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.util.Collection;
@@ -24,8 +23,6 @@ import java.util.Collection;
 @RequestMapping("/owners/{ownerId}")
 public class PetController {
 
-    private static final String VIEWS_PETS_CREATE_OR_UPDATE_FORM = "pets/createOrUpdatePetForm";
-
     private final PetService petService;
     private final OwnerService ownerService;
     private final PetTypeService petTypeService;
@@ -36,63 +33,58 @@ public class PetController {
         this.petTypeService = petTypeService;
     }
 
-    @ModelAttribute("types")
-    public Collection<PetType> populatePetTypes() {
-        return petTypeService.findAll();
-    }
-
-    @ModelAttribute("owner")
-    public Owner findOwner(@PathVariable("ownerId") Long ownerId) {
-        return ownerService.findById(ownerId);
-    }
-
     @InitBinder("owner")
     public void initOwnerBinder(WebDataBinder dataBinder) {
         dataBinder.setDisallowedFields("id");
     }
 
-    @GetMapping("/pets/new")
-    public String initCreationForm(Owner owner, Model model) {
-        Pet pet = new Pet();
-        owner.getPets().add(pet);
-        pet.setOwner(owner);
-        model.addAttribute("pet", pet);
-        return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
+    @GetMapping("/pets/{petId}/edit")
+    public ResponseEntity<Collection<Pet>> getPets() {
+        Collection<Pet> pets = this.petService.findAll();
+        if (pets.isEmpty()) {
+            return new ResponseEntity<Collection<Pet>>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<Collection<Pet>>(pets, HttpStatus.OK);
     }
 
     @PostMapping("/pets/new")
-    public String processCreationForm(Owner owner, @Valid Pet pet, BindingResult result, ModelMap model) {
-        if (StringUtils.hasLength(pet.getName()) && pet.isNew() && owner.getPet(pet.getName(), true) != null){
-            result.rejectValue("name", "duplicate", "already exists");
+    public ResponseEntity<Pet> addPet(@RequestBody @Valid Pet pet, BindingResult bindingResult,
+                                      UriComponentsBuilder ucBuilder) {
+        HttpHeaders headers = new HttpHeaders();
+        if (bindingResult.hasErrors() || (pet == null)) {
+            return new ResponseEntity<Pet>(HttpStatus.BAD_REQUEST);
         }
-        pet.setOwner(owner);
-        if (result.hasErrors()) {
-            model.put("pet", pet);
-            return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
-        } else {
-            petService.save(pet);
-
-            return "redirect:/owners/" + owner.getId();
-        }
+        this.petService.save(pet);
+        headers.setLocation(ucBuilder.path("/owners/{ownerId}/pets/new").buildAndExpand(pet.getId()).toUri());
+        return new ResponseEntity<Pet>(pet, headers, HttpStatus.CREATED);
     }
 
-    @GetMapping("/pets/{petId}/edit")
-    public String initUpdateForm(@PathVariable Long petId, Model model) {
-        model.addAttribute("pet", petService.findById(petId));
-        return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
-    }
-
-    @PostMapping("/pets/{petId}/edit")
-    public String processUpdateForm(@Valid Pet pet, BindingResult result, Owner owner, Model model) {
-        if (result.hasErrors()) {
-            pet.setOwner(owner);
-            model.addAttribute("pet", pet);
-            return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
-        } else {
-            pet.setOwner(owner);
-            petService.save(pet);
-            return "redirect:/owners/" + owner.getId();
+    @PutMapping("/pets/{petId}/edit")
+    public ResponseEntity<Pet> updatePet(@PathVariable("petId") Long petId, @RequestBody @Valid Pet pet,
+                                         BindingResult bindingResult) {
+        HttpHeaders headers = new HttpHeaders();
+        if (bindingResult.hasErrors() || (pet == null)) {
+            return new ResponseEntity<Pet>(headers, HttpStatus.BAD_REQUEST);
         }
+        Pet currentPet = this.petService.findById(petId);
+        if (currentPet == null) {
+            return new ResponseEntity<Pet>(HttpStatus.NOT_FOUND);
+        }
+        currentPet.setBirthDate(pet.getBirthDate());
+        currentPet.setName(pet.getName());
+        currentPet.setPetType(pet.getPetType());
+        currentPet.setOwner(pet.getOwner());
+        this.petService.save(currentPet);
+        return new ResponseEntity<Pet>(currentPet, HttpStatus.NO_CONTENT);
     }
 
+    @DeleteMapping(value = "/{petId}")
+    public ResponseEntity<Void> deletePet(@PathVariable("petId") Long petId) {
+        Pet pet = this.petService.findById(petId);
+        if (pet == null) {
+            return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+        }
+        this.petService.delete(pet);
+        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+    }
 }

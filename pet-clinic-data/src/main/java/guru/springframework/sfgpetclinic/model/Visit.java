@@ -1,5 +1,6 @@
 package guru.springframework.sfgpetclinic.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -19,6 +20,7 @@ public class Visit extends BaseEntity{
     @Column(name = "description")
     private String description;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "pet_id")
     private Pet pet;

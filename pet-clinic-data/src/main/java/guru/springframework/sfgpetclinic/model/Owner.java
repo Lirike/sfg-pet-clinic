@@ -1,5 +1,6 @@
 package guru.springframework.sfgpetclinic.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,6 +22,7 @@ public class Owner extends Person{
     private String city;
     @Column(name = "telephone")
     private String telephone;
+    @JsonManagedReference
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner")
     private final Set<Pet> pets = new HashSet<>();
 
