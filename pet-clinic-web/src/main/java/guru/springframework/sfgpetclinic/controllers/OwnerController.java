@@ -6,14 +6,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.util.Collection;
 
 @RequestMapping("/owners")
 @Controller
@@ -30,30 +29,13 @@ public class OwnerController {
         dataBinder.setDisallowedFields("id");
     }
 
-    @GetMapping()
-    public String processFindForm(Owner owner, BindingResult result, Model model) {
-        //allow parameterless GET request for /owners to return all records
-        if (owner.getLastName() == null) {
-            owner.setLastName(""); //empty string signifies broadest possible search
+    @GetMapping(value = "")
+    public ResponseEntity<Collection<Owner>> getOwners() {
+        Collection<Owner> owners = this.ownerService.findAll();
+        if (owners.isEmpty()) {
+            return new ResponseEntity<Collection<Owner>>(HttpStatus.NOT_FOUND);
         }
-
-        //find owners by last name
-        List<Owner> results = ownerService.findAllByLastNameLike("%" + owner.getLastName() + "%");
-
-        if (results.isEmpty()) {
-            //no owners found
-            result.rejectValue("lastName", "notFound", "not found");
-            return "owners/findOwners";
-        } else if (results.size() == 1) {
-            // 1 owner found
-            owner = results.get(0);
-            return "redirect:/owners/" + owner.getId();
-        } else {
-            //multiple owners found
-            model.addAttribute("selections", results);
-            return "owners/ownersList";
-        }
-
+        return new ResponseEntity<Collection<Owner>>(owners, HttpStatus.OK);
     }
 
     @GetMapping("/{ownerId}")
